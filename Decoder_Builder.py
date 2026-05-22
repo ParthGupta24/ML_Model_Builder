@@ -28,9 +28,9 @@ class token_and_position_embedding(keras.layers.Layer):
 
 
 class decoder_block(keras.layers.Layer):
-    def __init__(self, num_heads, key_dims, use_causal_mask=True):
+    def __init__(self, num_heads, key_dims):
         super(decoder_block, self).__init__()
-        self.mha = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dims, use_causal_mask=use_causal_mask)
+        self.mha = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dims)
         self.ffn = keras.Sequential([
             keras.layers.Dense(4 * key_dims, activation='relu'),
             keras.layers.Dense(key_dims)
@@ -38,8 +38,9 @@ class decoder_block(keras.layers.Layer):
         self.layernorm1 = keras.layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = keras.layers.LayerNormalization(epsilon=1e-6)
 
+
     def call(self, inputs):
-        attn_output = self.mha(inputs, inputs)
+        attn_output = self.mha(inputs, inputs, use_causal_mask=True)
         out1 = self.layernorm1(inputs + attn_output)
         ffn_output = self.ffn(out1)
         out2 = self.layernorm2(out1 + ffn_output)
@@ -66,12 +67,12 @@ class Decoder_Builder:
         self.vocab_size = vocab_size
         self.embed_dim = embed_dim
         
-    def build_decoder(self, mask=True):
+    def build_decoder(self):
         inp = keras.layers.Input(shape=(self.maxlen, ))
         pos_emd = token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
         x = pos_emd
         for _ in range(self.num_decoder_blocks):
-            x = decoder_block(num_heads=self.num_heads, key_dims=self.key_dims, use_causal_mask=mask)(x)
+            x = decoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(x)
         x = keras.layers.Dense(units=self.vocab_size, activation='softmax')(x)
         model = keras.Model(inputs=inp, outputs=x, name=self.model_name)
         self.model = model
