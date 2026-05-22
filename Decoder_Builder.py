@@ -39,9 +39,9 @@ class decoder_block(keras.layers.Layer):
         self.layernorm2 = keras.layers.LayerNormalization(epsilon=1e-6)
 
 
-    def call(self, inputs):
-        attn_output = self.mha(inputs, inputs, use_causal_mask=True)
-        out1 = self.layernorm1(inputs + attn_output)
+    def call(self, values, queries):
+        attn_output = self.mha(values, queries, use_causal_mask=True)
+        out1 = self.layernorm1(values + attn_output)
         ffn_output = self.ffn(out1)
         out2 = self.layernorm2(out1 + ffn_output)
         return out2
@@ -67,12 +67,13 @@ class Decoder_Builder:
         self.vocab_size = vocab_size
         self.embed_dim = embed_dim
         
-    def build_decoder(self):
+    def build_decoder(self, query = None):
         inp = keras.layers.Input(shape=(self.maxlen, ))
         pos_emd = token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
         x = pos_emd
         for _ in range(self.num_decoder_blocks):
-            x = decoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(x)
+            x = decoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(values = x, queries = x if query is None else query)
+            query = x
         x = keras.layers.Dense(units=self.vocab_size, activation='softmax')(x)
         model = keras.Model(inputs=inp, outputs=x, name=self.model_name)
         self.model = model
