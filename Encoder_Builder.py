@@ -1,5 +1,6 @@
+import os
 import keras
-import tensorflow as tf
+from keras import ops
 
 class token_and_position_embedding(keras.layers.Layer):
     def __init__(self, maxlen, vocab_size, embed_dim):
@@ -8,8 +9,8 @@ class token_and_position_embedding(keras.layers.Layer):
         self.pos_emb = keras.layers.Embedding(input_dim=maxlen, output_dim=embed_dim)
 
     def call(self, x):
-        maxlen = tf.shape(x)[-1]
-        positions = tf.range(start=0, limit=maxlen, delta=1)
+        maxlen = ops.shape(x)[-1]
+        positions = ops.arange(maxlen)
         positions = self.pos_emb(positions)
         x = self.token_emb(x)
         return x + positions
