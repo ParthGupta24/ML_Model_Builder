@@ -28,9 +28,9 @@ class token_and_position_embedding(keras.layers.Layer):
 
 
 class decoder_block(keras.layers.Layer):
-    def __init__(self, num_heads, key_dims):
+    def __init__(self, num_heads, key_dims, use_causal_mask=True):
         super(decoder_block, self).__init__()
-        self.mha = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dims)
+        self.mha = keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=key_dims, use_causal_mask=use_causal_mask)
         self.ffn = keras.Sequential([
             keras.layers.Dense(4 * key_dims, activation='relu'),
             keras.layers.Dense(key_dims)
@@ -71,8 +71,7 @@ class Decoder_Builder:
         pos_emd = token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
         x = pos_emd
         for _ in range(self.num_decoder_blocks):
-            x = decoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(x)
-        x = keras.layers.GlobalAveragePooling1D()(x)
+            x = decoder_block(num_heads=self.num_heads, key_dims=self.key_dims, use_causal_mask=mask)(x)
         x = keras.layers.Dense(units=self.vocab_size, activation='softmax')(x)
         model = keras.Model(inputs=inp, outputs=x, name=self.model_name)
         self.model = model
