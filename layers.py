@@ -9,7 +9,7 @@ class token_and_position_embedding(keras.layers.Layer):
 
     def call(self, x):
         maxlen = ops.shape(x)[-1]
-        positions = ops.arange(limit=maxlen)
+        positions = ops.arange(maxlen)
         positions = self.pos_emb(positions)
         x = self.token_emb(x)
         return x + positions
@@ -35,7 +35,7 @@ class patch_embedding(keras.layers.Layer):
     def call(self, inputs):
         patches = self.patch_emb(inputs)
         patches = keras.layers.Reshape((patches.shape[1] * patches.shape[2], patches.shape[3]))(patches)
-        positions = ops.arange(limit=ops.shape(patches)[1])
+        positions = ops.arange(ops.shape(patches)[1])
         pos_embeddings = self.pos_emb(positions)
         return patches + pos_embeddings
     
