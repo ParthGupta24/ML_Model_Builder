@@ -1,6 +1,6 @@
 import os
 import keras
-import layers
+from ML_Model_Builder import layers as my_layers
 
 class Decoder_Builder:
     def __init__(self, model_name, num_decoder_blocks, num_heads, key_dims, maxlen, vocab_size, embed_dim):
@@ -14,10 +14,10 @@ class Decoder_Builder:
         
     def build_decoder(self, query = None):
         inp = keras.layers.Input(shape=(self.maxlen, ))
-        pos_emd = layers.token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
+        pos_emd = my_layers.token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
         x = pos_emd
         for _ in range(self.num_decoder_blocks):
-            x = layers.decoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(values = x, queries = x if query is None else query)
+            x = my_layers.decoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(values = x, queries = x if query is None else query)
             query = x
         x = keras.layers.Dense(units=self.vocab_size, activation='softmax')(x)
         model = keras.Model(inputs=inp, outputs=x, name=self.model_name)

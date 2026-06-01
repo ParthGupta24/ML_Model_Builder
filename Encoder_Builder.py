@@ -1,6 +1,6 @@
 import os
 import keras
-import layers
+from ML_Model_Builder import layers as my_layers
 
 class Encoder_Builder:
     def __init__(self, model_name, num_encoder_blocks, num_heads, key_dims, maxlen, vocab_size, embed_dim):
@@ -14,10 +14,10 @@ class Encoder_Builder:
     
     def build_encoder(self):
         inp = keras.layers.Input(shape=(self.maxlen, ))
-        pos_emd = layers.token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
+        pos_emd = my_layers.token_and_position_embedding(maxlen=self.maxlen, vocab_size=self.vocab_size, embed_dim=self.embed_dim)(inp)
         x = pos_emd
         for _ in range(self.num_encoder_blocks):
-            x = layers.encoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(x)
+            x = my_layers.encoder_block(num_heads=self.num_heads, key_dims=self.key_dims)(x)
         model = keras.Model(inputs=inp, outputs=x, name=self.model_name)
         self.model = model
         return model
